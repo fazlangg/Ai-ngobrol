@@ -56,8 +56,8 @@
 <button onclick="mulaiRekam()">Mulai Bicara</button>
 
 <script>
-  const API_KEY = "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"; // Ganti dengan API key kamu
-
+  const API_KEY = "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";
+  
   async function kirimKeOpenAI(teks) {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
