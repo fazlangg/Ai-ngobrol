@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>FAZLAN Voice Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f7f9fc;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #007bff;
+      margin-bottom: 10px;
+    }
+    #chat {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+    button {
+      display: block;
+      margin: 0 auto;
+      background: #007bff;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .user {
+      color: #007bff;
+    }
+    .bot {
+      color: #28a745;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎤 FAZLAN Voice Assistant</h1>
+<div id="chat">💬 Siap mendengarkan...</div>
+<button onclick="mulaiRekam()">Mulai Bicara</button>
+
+<script>
+  const API_KEY = "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"; // Ganti dengan API key kamu
+
+  async function kirimKeOpenAI(teks) {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: teks }],
+        temperature: 0.7
+      })
+    });
+
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || "[Gagal menjawab]";
+    return reply;
+  }
+
+  function tampilkan(pengirim, teks) {
+    const el = document.getElementById("chat");
+    const baris = document.createElement("div");
+    baris.innerHTML = `<strong class="${pengirim}">${pengirim === 'user' ? '🧍 Kamu' : '🤖 FAZLAN'}:</strong> ${teks}`;
+    el.appendChild(baris);
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function bicara(teks) {
+    const suara = new SpeechSynthesisUtterance(teks);
+    suara.lang = "id-ID";
+    suara.pitch = 1;
+    suara.rate = 1;
+    speechSynthesis.speak(suara);
+  }
+
+  function mulaiRekam() {
+    const rekam = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rekam.lang = "id-ID";
+    rekam.start();
+
+    rekam.onresult = async (event) => {
+      const teks = event.results[0][0].transcript;
+      tampilkan("user", teks);
+      tampilkan("bot", "Sedang berpikir...");
+      const balasan = await kirimKeOpenAI(teks);
+      const divs = document.querySelectorAll("#chat .bot");
+      if (divs.length) divs[divs.length - 1].innerHTML = `<strong class="bot">🤖 FAZLAN:</strong> ${balasan}`;
+      else tampilkan("bot", balasan);
+      bicara(balasan);
+    };
+
+    rekam.onerror = () => {
+      tampilkan("bot", "❌ Maaf, tidak bisa menangkap suara kamu.");
+    };
+  }
+</script>
+
+</body>
+</html>
